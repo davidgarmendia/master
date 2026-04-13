@@ -3,22 +3,50 @@ package org.example;
 import com.microsoft.playwright.*;
 import org.junit.jupiter.api.*;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public class LoginTest {
+    // Definimos las variables a nivel de clase
+    static Playwright playwright;
+    static Browser browser;
+    BrowserContext context;
+    Page page;
+
+    @BeforeAll
+    static void launchBrowser() {
+        playwright = Playwright.create();
+        // headless(false) para que el reclutador vea qué pasa
+        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false));
+    }
+
+    @BeforeEach
+    void createContext() {
+        context = browser.newContext();
+        page = context.newPage();
+    }
 
     @Test
-    void miPrimerTest() {
-        try (Playwright playwright = Playwright.create()) {
-            // Lanzamos el navegador
-            Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false));
-            Page page = browser.newPage();
+    void testNavegacionTodoMVC() {
+        page.navigate("https://demo.playwright.dev/todomvc");
 
-            // Vamos a una página de prueba
-            page.navigate("https://www.google.com");
+        // Buscamos el input por su placeholder (Muy recomendado en Playwright)
+        Locator input = page.getByPlaceholder("What needs to be done?");
 
-            // Imprimimos el título para verificar
-            System.out.println("El título es: " + page.title());
+        // Escribimos y damos Enter
+        input.fill("Prueba técnica terminada");
+        input.press("Enter");
 
-            browser.close();
-        }
+        // Validamos que el elemento se creó en la lista
+        assertTrue(page.locator(".todo-list").isVisible());
+    }
+
+    @AfterEach
+    void closeContext() {
+        context.close();
+    }
+
+    @AfterAll
+    static void closeBrowser() {
+        playwright.close();
     }
 }
